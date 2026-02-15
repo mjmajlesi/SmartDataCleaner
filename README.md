@@ -8,25 +8,20 @@ A powerful, user-friendly web application for intelligent data cleaning and prep
   - Automatically detects both explicit missing values (NaN, NULL) and hidden ones (?, "n/a", "unknown", etc.)
   - Shows detailed statistics on missing data
 
-- **Data Standardization**
+- **Detect and remove duplicate data**
+  - Identify and handle duplicate rows to ensure data integrity
+
+- **Handling mixed data types**
+  - Detect and convert mixed data types for accurate analysis
+
+- **Visualization**
+  - Visualize missing data patterns and distributions
+  - Generate summary statistics and insights from your cleaned data
+  - matplotlib, seaborn, and plotly integration for powerful visualizations
+
+  - **Data Standardization**
   - Automatic column name cleaning (lowercase, remove spaces, standardize formatting)
   - Consistent data indexing
-
-- **Multi-Format Support**
-  - CSV files
-  - Excel files (XLSX, XLS)
-  - JSON files
-  - Tab-separated text files (TXT)
-
-- **Interactive Web Interface**
-  - Built with Streamlit for a responsive, modern UI
-  - Real-time data preview
-  - Comprehensive missing value report
-
-- **Data Quality Insights**
-  - View data previews instantly
-  - Track missing value percentages
-  - Identify data quality issues at a glance
 
 ## 🚀 Quick Start
 
@@ -63,30 +58,6 @@ A powerful, user-friendly web application for intelligent data cleaning and prep
    - Click the "Upload your dataset" button
    - Select your CSV, Excel, JSON, or TXT file
    - View the cleaned data preview
-   - Check the missing values report
-
-## 📊 How It Works
-
-### Data Processing Pipeline
-
-```
-Upload File → Read Data → Standardize Columns → Detect Hidden Values → Display Results
-```
-
-### Data Standardization
-
-The application automatically:
-- Converts column names to lowercase
-- Removes extra whitespace
-- Replaces spaces with underscores
-- Removes parentheses from column names
-- Starts row indexing from 1
-
-### Missing Value Detection
-
-Detects and replaces hidden missing values represented as:
-- `?`, `n/a`, `NA`, `null`, `none`, `-`, `--`, `undefined`, `unknown`, `missing`
-- Empty strings and spaces
 
 ## 📁 Project Structure
 
@@ -110,7 +81,8 @@ SmartDataCleaner/
 
 - **streamlit**: Web framework for data apps
 - **pandas**: Data manipulation and analysis
-- **openpyxl**: Excel file support
+- **numpy**: Numerical computing
+- **matplotlib**: Data visualization
 
 See `requirements.txt` for the complete list.
 
@@ -123,32 +95,9 @@ cd test
 python test.py
 ```
 
-## 🔧 Configuration
-
-The application uses sensible defaults for all settings. No additional configuration is required to get started!
-
-## 🐛 Known Limitations
-
-- Maximum file size depends on available system memory
-- Very large datasets may require additional processing time
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-- Report bugs and issues
-- Suggest new features
-- Submit pull requests with improvements
-
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 💡 Example Use Cases
-
-- **Data Scientists**: Prepare datasets for machine learning models
-- **Business Analysts**: Clean and normalize business data
-- **Researchers**: Process survey and experimental data
-- **Content Creators**: Prepare datasets for analysis and visualization
 
 ## 🎯 Roadmap
 
@@ -159,10 +108,9 @@ Future enhancements may include:
 - Statistical summaries and visualizations
 - Export cleaned data directly from the app
 
-## 📧 Support
+## 🤝 Contributing
 
-For questions, issues, or feature requests, please open an issue on the GitHub repository.
-
----
-
-**Happy Data Cleaning!** 🎉
+Contributions are welcome! Feel free to:
+- Report bugs and issues
+- Suggest new features
+- Submit pull requests with improvements

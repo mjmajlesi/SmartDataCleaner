@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from data_read import read_data
 from data_analyst import std_data , missing_hidden_values , drop_missing_values , impute_missing_value
+from clean_dtype import std_data_types , detect_mixed_types
 import missingno as msno
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -24,7 +25,18 @@ if uploaded:
     st.dataframe(df.head(20), use_container_width=True)
 
     st.subheader("Data Types")
-    
+    col1 , col2 = st.columns(2)
+    with col1:
+        st.subheader("Mixed data:")
+        mixed_types = detect_mixed_types(df)
+        st.write(mixed_types if mixed_types else "No mixed data types detected. and all columns have consistent data types.")
+    with col2:
+        st.subheader("Cleaned Data Types")
+        cleaned_dt , percent_lost = std_data_types(df)
+        st.dataframe(cleaned_dt.dtypes, use_container_width=True)
+        if percent_lost > 0:
+            st.warning(f"Warning: {percent_lost:.2f}% of the data was lost during type conversion.")
+
 
     st.subheader("Missing Values")
     col1 , col2 = st.columns([2 , 3])
@@ -56,7 +68,7 @@ if uploaded:
         else:
             st.write("No columns or rows were dropped. All columns and rows have less than 90% missing values.")
 
-    with col2:
+    # with col2:
         # st.subheader("fill missing values with KNN imputation")
         # imputed = impute_missing_value(df)
         # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))

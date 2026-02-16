@@ -1,3 +1,7 @@
 pandas
 numpy
 streamlit
+missingno
+matplotlib
+scikit-learn
+dateparser

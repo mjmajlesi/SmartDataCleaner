@@ -2,11 +2,11 @@ import pandas as pd
 import streamlit as st
 from sklearn.impute import KNNImputer
 
-
 def std_data(data : pd.DataFrame) -> pd.DataFrame:
   data.columns = data.columns.str.strip().str.lower().str.replace(" ", "_").str.replace("(", "").str.replace(")", "")
   data.index = data.index + 1 # start by 1
   return data
+
 
 
 
@@ -78,5 +78,28 @@ def impute_missing_value(data: pd.DataFrame):
   )
   return data_imputed
   
+
+# def knn_impute_dataframe(data):
+#     data = data.copy()
+
+#     num_cols = data.select_dtypes(include="number").columns
+#     cat_cols = data.select_dtypes(include=["object", "string", "category"]).columns
+#     date_cols = data.select_dtypes(include="datetime").columns
+
+#     from sklearn.impute import KNNImputer
+#     imputer = KNNImputer(n_neighbors=5)
+
+#     if len(num_cols) > 0:
+#         data[num_cols] = imputer.fit_transform(data[num_cols])
+
+#     for col in cat_cols:
+#         if data[col].isna().any():
+#             data[col].fillna(data[col].mode()[0], inplace=True)
+
+#     for col in date_cols:
+#         data[col].fillna(method="ffill", inplace=True)
+
+#     return data
+
 
   

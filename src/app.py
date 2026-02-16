@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
 from data_read import read_data
-from show_details import std_data , missing_hidden_values
+from data_analyst import std_data , missing_hidden_values , drop_missing_values , impute_missing_value
+import missingno as msno
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 st.set_page_config(page_title="SmartDataCleaner", layout="wide")
 st.title("SmartDataCleaner")
@@ -19,8 +23,49 @@ if uploaded:
     st.subheader("Preview")
     st.dataframe(df.head(20), use_container_width=True)
 
+    st.subheader("Data Types")
+    
+
     st.subheader("Missing Values")
-    missing_table = missing_hidden_values(df)
-    st.dataframe(missing_table, use_container_width=True)
+    col1 , col2 = st.columns([2 , 3])
+
+    with col1:
+        st.subheader("Missing Values Table")
+        missing_table = missing_hidden_values(df)
+        st.dataframe(missing_table, use_container_width=True)
+    with col2:
+        st.subheader("Missing Values Visualization")
+        fig, ax = plt.subplots(figsize=(10, 4))
+        msno.matrix(df, ax=ax, fontsize=10)
+        st.pyplot(fig)
+
+    st.subheader("Clean missing values")
+    col1 , col2 = st.columns(2)
+
+    with col1:
+        # Drop rows and columns with 90% or more missing values
+        st.subheader("Drop rows and columns with 90% or more missing values")
+        df , dropped_cols , dropped_rows = drop_missing_values(df)
+        if dropped_cols or dropped_rows:
+            st.write(f"Dropped columns: {', '.join(dropped_cols)}")
+            st.write(f"Dropped rows: {', '.join(map(str, dropped_rows))}")
+            st.write("Cleaned Data Preview")
+            fig, ax = plt.subplots(figsize=(10, 4))
+            msno.matrix(df, ax=ax, fontsize=10)
+            st.pyplot(fig)
+        else:
+            st.write("No columns or rows were dropped. All columns and rows have less than 90% missing values.")
+
+    with col2:
+        # st.subheader("fill missing values with KNN imputation")
+        # imputed = impute_missing_value(df)
+        # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+        # sns.histplot(df["age"], kde=True, ax=ax1)
+        # ax1.set_title("Original Age Distribution")
+        # sns.histplot(imputed["age"], kde=True, ax=ax2)
+        # ax2.set_title("Age with KNN Imputation")
+        # plt.tight_layout()
+        # st.pyplot(fig)
+
 
 

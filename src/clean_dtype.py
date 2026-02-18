@@ -15,7 +15,8 @@ def std_data_types(data: pd.DataFrame):
   for col, type_counts in mixed_types.items():
       dominant_type = max(type_counts, key=type_counts.get)
       if dominant_type in ["int" , "float" , "int64" , "float64"]:
-          data[col] , precent_lost = clean_numeric_column(data[col])
+          data[col] , percent_lost = clean_numeric_column(data[col])
+          precent_lost += percent_lost
       elif dominant_type == "str":
         data[col] = data[col].astype("string")
       elif dominant_type == "bool":

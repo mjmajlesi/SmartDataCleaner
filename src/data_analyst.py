@@ -29,23 +29,22 @@ def missing_values(data : pd.DataFrame) -> pd.DataFrame:
 
 
 
-def missing_hidden_values(data : pd.DataFrame) -> pd.DataFrame:
-  """ Detect hidden missing values in the DataFrame and replace them with pd.NA.
+def missing_hidden_values(data: pd.DataFrame):
+    data = data.copy()
+    missing_tokens = {"?", "n/a", "na", "null", "none", "-", "--", "", " ", "-1",
+                      "undefined", "unknown", "Unknown", "missing"}
 
-  :param data: The input DataFrame.
-  :return: The DataFrame with hidden missing values replaced by pd.NA.
-  """
-  missing = ["?", "n/a", "na", "null", "none", "-", "--", " ", "" , "-1", "undefined" , "unknown" , "missing"]
-  for val in data.columns:
-    if data[val].dtype == "object": # only srtings
-      value_counts = data[val].value_counts(dropna=False)
-      for value in missing:
-        if value in value_counts.index:
-          st.write(f"Column '{val}' has {value_counts[value]} hidden missing values represented as '{value}'.")
-          data[val] = data[val].replace(value , pd.NA)
+    # روی object + string + category کار کن (نه فقط object)
+    for col in data.columns:
+        if pd.api.types.is_object_dtype(data[col]) or pd.api.types.is_string_dtype(data[col]) or pd.api.types.is_categorical_dtype(data[col]):
+            s = data[col].astype("string")
+            # normalize برای اینکه " None " هم بگیرد
+            s_norm = s.str.strip().str.lower()
+            data[col] = s.mask(s_norm.isin({x.lower() for x in missing_tokens}), pd.NA)
 
-  missing_table = missing_values(data)
-  return missing_table
+    missing_table = missing_values(data)
+    return data, missing_table
+
 
 
 def drop_missing_values(data: pd.DataFrame):
@@ -65,41 +64,33 @@ def drop_missing_values(data: pd.DataFrame):
   dropped_rows = row[row >= 0.9].index.tolist()
   
   return data , dropped_cols , dropped_rows
+  
 
-def impute_missing_value(data: pd.DataFrame):
-  """ Impute missing values using KNN imputation.
+def impute_dataframe(data: pd.DataFrame) -> pd.DataFrame:
+  """Impute missing values in a DataFrame using KNN imputation.
 
   :param data: The input DataFrame.
   :return: The DataFrame with imputed missing values.
   """
+  data = data.copy()
+
+  num_cols = data.select_dtypes(include="number").columns
+  cat_cols = data.select_dtypes(include=["object", "string", "category"]).columns
+  date_cols = data.select_dtypes(include="datetime").columns
+
   imputer = KNNImputer(n_neighbors=5)
-  data_imputed = pd.DataFrame(
-    imputer.fit_transform(data) , columns=data.columns , index=data.index
-  )
-  return data_imputed
-  
 
-# def knn_impute_dataframe(data):
-#     data = data.copy()
+  if len(num_cols) > 0:
+    data[num_cols] = imputer.fit_transform(data[num_cols]) # KNN imputation
 
-#     num_cols = data.select_dtypes(include="number").columns
-#     cat_cols = data.select_dtypes(include=["object", "string", "category"]).columns
-#     date_cols = data.select_dtypes(include="datetime").columns
+  for col in cat_cols:
+    if data[col].isna().any():
+      data[col] = data[col].fillna(data[col].mode()[0]) # Mode imputation
 
-#     from sklearn.impute import KNNImputer
-#     imputer = KNNImputer(n_neighbors=5)
+  for col in date_cols:
+    data[col] = data[col].fillna(method="ffill") # Forward fill 
 
-#     if len(num_cols) > 0:
-#         data[num_cols] = imputer.fit_transform(data[num_cols])
-
-#     for col in cat_cols:
-#         if data[col].isna().any():
-#             data[col].fillna(data[col].mode()[0], inplace=True)
-
-#     for col in date_cols:
-#         data[col].fillna(method="ffill", inplace=True)
-
-#     return data
+  return data , num_cols
 
 
   

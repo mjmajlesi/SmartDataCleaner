@@ -3,6 +3,7 @@ import pandas as pd
 from data_read import read_data
 from data_analyst import std_data , missing_hidden_values , drop_missing_values  , impute_dataframe
 from clean_dtype import std_data_types , detect_mixed_types
+from data_outlier import detect_outliers
 import missingno as msno
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -83,8 +84,21 @@ if uploaded:
     })
     
     with col1:
-        st.subheader("Missing Values Comparison Table")
-        st.dataframe(comparison_data, use_container_width=True)
+        st.subheader("Imputation Summary")
+        col11, col12, col13 = st.columns(3)
+        with col11:
+            total_missing_before = df.isnull().sum().sum()
+            st.metric("Total Missing Before", int(total_missing_before))
+            total_values_before = df.shape[0] * df.shape[1]
+            st.metric("Total Values", int(total_values_before))
+        with col12:
+            total_missing_after = imputed.isnull().sum().sum()
+            st.metric("Total Missing After", int(total_missing_after))
+        with col13:
+            imputed_count = total_missing_before - total_missing_after
+            st.metric("Values Imputed", int(imputed_count))
+            imputation_percentage = (imputed_count / total_values_before * 100) if total_values_before > 0 else 0
+            st.metric("Imputation Percentage", f"{imputation_percentage:.2f}%")
     
     with col2:
         st.subheader("Imputation — (Before vs After)")
@@ -96,4 +110,79 @@ if uploaded:
         ax2.set_title("Missing Values After Imputation")
         plt.tight_layout()
         st.pyplot(fig)
+
+    
+    # Outlier Detection ----------------------------------------------------
+    out_num, out_cat = detect_outliers(df)
+
+
+    st.subheader("Outlier Detection Summary")
+    num_summary = out_num.sum().sort_values(ascending=False)
+    cat_summary = out_cat.sum().sort_values(ascending=False)
+    num_precent = (num_summary / len(df) * 100).round(2)
+    cat_precent = (cat_summary / len(df) * 100).round(2)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write("Numeric outliers (IQR) — count per column")
+        st.dataframe(num_summary.rename("outlier_count").to_frame().assign(percent=num_precent), use_container_width=True)
+
+    with col2:
+        st.write("Categorical outliers (rare categories) — count per column")
+        st.dataframe(cat_summary.rename("outlier_count").to_frame().assign(percent=cat_precent), use_container_width=True)
+
+
+    st.subheader("Numeric Outliers — Scatter Plot")
+
+    num_cols = df.select_dtypes(include="number").columns.tolist()
+    if not num_cols:
+        st.info("No numeric columns found.")
+    else:
+        col = st.selectbox("Select column", num_cols)
+
+    plot_df = df[[col]].copy()
+    plot_df["index"] = df.index
+    plot_df["Outlier"] = out_num[col].map({True: "Outlier", False: "Normal"})
+
+    fig, ax = plt.subplots(figsize=(12, 4))
+
+    sns.scatterplot(
+        data=plot_df,
+        x="index",
+        y=col,
+        hue="Outlier",
+        palette={"Normal": "steelblue", "Outlier": "red"},
+        ax=ax
+    )
+    ax.set_title(f"Outlier Detection — {col} (IQR)")
+    ax.set_xlabel("Row Index")
+    st.pyplot(fig)
+
+
+    st.subheader("Rare categories (details)")
+    rows = []
+    threshold = 0.01
+    cat_cols = df.select_dtypes(include=["object", "string", "category"]).columns
+
+    for col in cat_cols:
+        vc = df[col].astype("string").value_counts(normalize=True, dropna=False)
+        rare = vc[vc < threshold]
+        for cat, pct in rare.items():
+            rows.append({
+                "column": col,
+                "value": str(cat),
+                "percent": float(pct * 100),
+                "count": int((df[col].astype("string") == str(cat)).sum())
+            })
+
+    rare_table = pd.DataFrame(rows)
+    if rare_table.empty:
+        st.info("No rare categories found.")
+    else:
+        st.dataframe(rare_table, use_container_width=True)
+
+
+
+
+
 

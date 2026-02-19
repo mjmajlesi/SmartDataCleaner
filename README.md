@@ -4,24 +4,36 @@ A powerful, user-friendly web application for intelligent data cleaning and prep
 
 ## ✨ Features
 
-- **Smart Missing Value Detection**
+- **Smart Missing Value Detection & Imputation**
   - Automatically detects both explicit missing values (NaN, NULL) and hidden ones (?, "n/a", "unknown", etc.)
   - Shows detailed statistics on missing data
+  - **KNN Imputation** for numeric columns
+  - **Mode Imputation** for categorical columns
+  - **Forward Fill** for date/time columns
+  - Visual comparison of data before and after imputation with histograms
 
-- **Detect and remove duplicate data**
-  - Identify and handle duplicate rows to ensure data integrity
+- **Outlier Detection**
+  - **IQR Method** for numeric columns to identify statistical outliers
+  - **Frequency-Based Detection** for categorical columns (rare categories < 1%)
+  - Scatter plot visualization of detected outliers
+  - Detailed summary statistics per column
 
-- **Handling mixed data types**
+- **Data Type Handling**
   - Detect and convert mixed data types for accurate analysis
+  - Identify columns with inconsistent data types
+  - Automatic type conversion with data loss reporting
 
-- **Visualization**
-  - Visualize missing data patterns and distributions
-  - Generate summary statistics and insights from your cleaned data
-  - matplotlib, seaborn, and plotly integration for powerful visualizations
-
-  - **Data Standardization**
-  - Automatic column name cleaning (lowercase, remove spaces, standardize formatting)
+- **Automatic Data Cleaning**
+  - Drop rows and columns with 90% or more missing values
+  - Automatic column name standardization (lowercase, remove spaces, remove parentheses)
   - Consistent data indexing
+
+- **Data Visualization**
+  - Missing data patterns using matrix visualization
+  - Scatter plots for outlier detection
+  - Histogram comparisons for imputation effects
+  - Summary statistics and metrics
+  - matplotlib and seaborn integration for powerful visualizations
 
 ## 🚀 Quick Start
 
@@ -65,13 +77,13 @@ A powerful, user-friendly web application for intelligent data cleaning and prep
 SmartDataCleaner/
 ├── src/
 │   ├── app.py              # Main Streamlit application
-│   ├── data_read.py        # Data reading utilities
-│   ├── data_analyst.py     # Data analysis and cleaning functions
-│   ├── titanic.csv         # Sample dataset
+│   ├── data_read.py        # Data reading utilities (CSV, Excel, JSON, TXT)
+│   ├── data_analyst.py     # Data analysis & cleaning functions (imputation, missing values)
+│   ├── data_outlier.py     # Outlier detection (IQR, frequency-based)
+│   ├── clean_dtype.py      # Data type standardization and conversion
 │   └── __pycache__/
 ├── test/
 │   ├── test.py             # Test suite
-│   └── titanic.csv
 ├── requirements.txt        # Python dependencies
 ├── README.md              # This file
 └── LICENSE                 # Project license
@@ -79,12 +91,24 @@ SmartDataCleaner/
 
 ## 📦 Dependencies
 
-- **streamlit**: Web framework for data apps
-- **pandas**: Data manipulation and analysis
-- **numpy**: Numerical computing
-- **matplotlib**: Data visualization
+- **streamlit** - Web framework for data apps
+- **pandas** - Data manipulation and analysis
+- **numpy** - Numerical computing
+- **matplotlib** - Data visualization
+- **seaborn** - Statistical data visualization
+- **scikit-learn** - Machine learning library (KNN Imputation)
+- **missingno** - Missing data visualization
+- **openpyxl** - Excel file support
+- **dateparser** - Date parsing and conversion
 
-See `requirements.txt` for the complete list.
+See `requirements.txt` for the complete list with versions.
+
+## 📂 Supported File Formats
+
+- CSV (.csv)
+- Excel (.xlsx, .xls)
+- JSON (.json)
+- Text (.txt)
 
 ## 🧪 Testing
 
@@ -95,18 +119,60 @@ cd test
 python test.py
 ```
 
-## 📝 License
+## 🔄 Data Cleaning Pipeline
+
+SmartDataCleaner follows a comprehensive data cleaning workflow:
+
+1. **Data Standardization** → Column name cleaning and normalization
+2. **Data Type Detection** → Identify mixed types and inconsistencies
+3. **Hidden Missing Value Detection** → Find and replace hidden missing values
+4. **Automatic Filtering** → Remove rows/columns with 90%+ missing data
+5. **Missing Value Imputation**
+   - Numeric columns: KNN Imputation
+   - Categorical columns: Mode Imputation
+   - Date columns: Forward Fill + Backward Fill
+6. **Outlier Detection** → Identify and report outliers using IQR and frequency analysis
+7. **Export Clean Data** → Download your cleaned dataset
+
+## � Methods & Algorithms
+
+### Missing Value Imputation
+- **KNN Imputation**: For numeric columns, uses 5 nearest neighbors to estimate missing values
+- **Mode Imputation**: For categorical columns, fills with most frequent value
+- **Forward Fill**: For time-series data, propagates last known value forward
+
+### Outlier Detection
+- **IQR Method** (Numeric): 
+  - Identifies values outside the range [Q1 - 1.5×IQR, Q3 + 1.5×IQR]
+- **Frequency-Based** (Categorical):
+  - Flags categories with frequency < 1% as rare/outliers
+
+### Data Type Detection
+- **Mixed Type Detection**: Identifies columns with inconsistent data types
+- **Automatic Conversion**: Converts to dominant type with loss reporting
+- **Hidden Missing Value Detection**: Recognizes common missing value representations (?, n/a, null, etc.)
+
+## ���📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🎯 Roadmap
 
-Future enhancements may include:
-- Duplicate row detection and removal
-- Outlier detection and handling
-- Data type inference and conversion
-- Statistical summaries and visualizations
-- Export cleaned data directly from the app
+**✅ Completed Features:**
+- ✅ Duplicate row detection and removal
+- ✅ Outlier detection (numeric and categorical)
+- ✅ Data type inference and conversion
+- ✅ Missing value imputation (KNN, Mode, Forward Fill)
+- ✅ Statistical visualizations
+
+**🚧 Planned Features:**
+- Advanced statistical summaries and distribution analysis
+- Correlation matrix and feature relationship visualization
+- Time-series data handling and forecasting
+- Custom imputation strategies and algorithms
+- Export cleaned data with multiple format options (CSV, Excel, JSON)
+- Data quality score and profiling
+- Automated data profiling and recommendations
 
 ## 🤝 Contributing
 

@@ -9,7 +9,8 @@ def detect_outliers(data: pd.DataFrame):
   outliers_numeric = data[col_numeric].apply(detect_numeric)
   # Categorical columns
   col_categorical = data.select_dtypes(include=["object", "string", "category"]).columns
-  outliers_categorical = data[col_categorical].apply(detect_categorical)
+  max_unique = int(0.05 * len(data))
+  outliers_categorical = data[col_categorical].apply(detect_categorical, max_unique=max_unique)
   return outliers_numeric, outliers_categorical
 
 
@@ -27,11 +28,30 @@ def detect_numeric(col: pd.Series) -> pd.Series:
   return outliers
 
 
-def detect_categorical(col: pd.Series) -> pd.Series:
+def detect_categorical(col: pd.Series , max_unique: int) -> pd.Series:
   """ Detect outliers in a categorical column based on frequency.
     :param col: The input Series representing a categorical column.
     :return: A Series with outliers marked as True and non-outliers as False.
   """
-  freq = col.value_counts(normalize=True)
-  outliers = freq[freq < 0.01].index  # Mark as outlier if frequency is less than 1%
-  return col.isin(outliers)
+  s = col.dropna()
+  n = len(s)
+
+  # Edge cases
+  if n == 0:
+    return pd.Series(False, index=col.index)
+
+  nunique = s.nunique(dropna=True)
+  unique_ratio = nunique / n
+
+  # Skip high-cardinality columns (likely identifiers / free-text)
+  if nunique > max_unique or unique_ratio > 0.3:
+    return pd.Series(False, index=col.index)
+
+  vc = s.value_counts(dropna=True)
+  freq = vc / n
+
+  rare_values = freq[freq < 0.01].index
+  # also require small absolute count to avoid flagging common-but-slightly-below-threshold
+  rare_values = [v for v in rare_values if vc[v] < 3]
+
+  return col.isin(rare_values)

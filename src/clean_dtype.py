@@ -9,22 +9,28 @@ def std_data_types(data: pd.DataFrame):
   :param data: The input DataFrame.
   :return: The DataFrame with standardized data types and the total percentage of data lost.
   """
-  precent_lost = 0
+  precent_lost_mix = 0
   data = data.convert_dtypes()
   mixed_types = detect_mixed_types(data)
-  for col, type_counts in mixed_types.items():
-      dominant_type = max(type_counts, key=type_counts.get)
-      if dominant_type in ["int" , "float" , "int64" , "float64"]:
-          data[col] , percent_lost = clean_numeric_column(data[col])
-          precent_lost += percent_lost
-      elif dominant_type == "str":
-        data[col] = data[col].astype("string")
-      elif dominant_type == "bool":
-        data[col] = clean_boolean_column(data[col])
-      elif dominant_type == ["datetime" , "Timestamp"]:
-        data[col] = data[col].apply(lambda x: convert_to_iso(str(x)))
 
-  return data , precent_lost
+  for col, type_counts in mixed_types.items():
+    dominant_type = max(type_counts, key=type_counts.get)
+
+    if dominant_type in ["int", "float", "int64", "float64"]:
+      data[col], precent_lost_mix = clean_numeric_column(data[col])
+
+    elif dominant_type == "str":
+      data[col] = data[col].astype("string")
+
+    elif dominant_type == "bool":
+      data[col] = clean_boolean_column(data[col])
+
+    elif dominant_type in ["datetime", "Timestamp"]:
+      data[col] = pd.to_datetime(data[col], errors="coerce")
+
+  data_cleaned = detect_dtypes(data)
+
+  return data_cleaned, precent_lost_mix
   
 
 
@@ -49,7 +55,7 @@ def clean_numeric_column(col: pd.Series):
   """
   numeric = pd.to_numeric(col, errors='coerce')
   # Check what percentage of data was lost
-  percent_lost = (col.dropna().size - numeric.count()) / col.size * 100
+  precent_lost = (numeric.isna().sum() / len(col)) * 100
 
   return numeric , percent_lost
 
@@ -75,3 +81,31 @@ def convert_to_iso(date_string):
 
     return iso_date
 
+
+def detect_dtypes(data: pd.DataFrame) -> pd.DataFrame:
+  """ Detect and standardize data types in the DataFrame.
+  :param data: The input DataFrame.
+  :return: The DataFrame with standardized data types.
+  """
+  for col in data.columns:
+    if data[col].dtype in ["object", "string"]:
+      # 1) numeric test
+      num_try = pd.to_numeric(data[col], errors="coerce")
+      if num_try.notna().median() > 0.9:
+        data[col] = num_try
+        continue
+
+      # 2) datetime test
+      dt_try = pd.to_datetime(data[col], errors="coerce")
+      if dt_try.notna().mean() > 0.9:
+        data[col] = dt_try
+        continue
+
+      # 3) boolean test
+      if set(data[col].dropna().unique()).issubset({"True","False","true","false",1,0}):
+        data[col] = data[col].astype("bool")
+        continue
+
+      # 4) else → categorical
+      data[col] = data[col].astype("string")
+  return data

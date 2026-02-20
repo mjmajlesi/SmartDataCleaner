@@ -30,7 +30,7 @@ if uploaded:
     with col1:
         st.subheader("Mixed data:")
         mixed_types = detect_mixed_types(df)
-        st.write(mixed_types if mixed_types else "No mixed data types detected. and all columns have consistent data types.")
+        st.info(mixed_types if mixed_types else "No mixed data types detected. and all columns have consistent data types.")
     with col2:
         st.subheader("Cleaned Data Types")
         df , percent_lost = std_data_types(df)
@@ -66,7 +66,7 @@ if uploaded:
         msno.matrix(df, ax=ax, fontsize=10)
         st.pyplot(fig)
     else:
-        st.write("No columns or rows were dropped. All columns and rows have less than 90% missing values.")
+        st.info("No columns or rows were dropped. All columns and rows have less than 90% missing values.")
 
     
     st.subheader("fill missing values with KNN imputation and mode imputation")
@@ -132,7 +132,7 @@ if uploaded:
         st.dataframe(cat_summary.rename("outlier_count").to_frame().assign(percent=cat_precent), use_container_width=True)
 
 
-    st.subheader("Numeric Outliers — Scatter Plot")
+    st.subheader("Numeric Outliers(IQR) — Scatter Plot")
 
     num_cols = df.select_dtypes(include="number").columns.tolist()
     if not num_cols:
@@ -159,27 +159,12 @@ if uploaded:
     st.pyplot(fig)
 
 
-    st.subheader("Rare categories (details)")
-    rows = []
-    threshold = 0.01
-    cat_cols = df.select_dtypes(include=["object", "string", "category"]).columns
-
-    for col in cat_cols:
-        vc = df[col].astype("string").value_counts(normalize=True, dropna=False)
-        rare = vc[vc < threshold]
-        for cat, pct in rare.items():
-            rows.append({
-                "column": col,
-                "value": str(cat),
-                "percent": float(pct * 100),
-                "count": int((df[col].astype("string") == str(cat)).sum())
-            })
-
-    rare_table = pd.DataFrame(rows)
-    if rare_table.empty:
-        st.info("No rare categories found.")
+    st.subheader("Categorical Outlier(Rare categories)")
+    if not cat_summary.any():
+        st.info("No rare categories detected.")
     else:
-        st.dataframe(rare_table, use_container_width=True)
+        st.dataframe(cat_summary[cat_summary > 0])  # Show only columns with rare categories
+
 
 
 

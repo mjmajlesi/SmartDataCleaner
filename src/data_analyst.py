@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import streamlit as st
 from sklearn.impute import KNNImputer
 
@@ -93,4 +94,45 @@ def impute_dataframe(data: pd.DataFrame) -> pd.DataFrame:
   return data , num_cols
 
 
-  
+
+# Correlation Analysis
+def detect_correlation(data: pd.DataFrame, threshold: float = 0.5) -> pd.DataFrame:
+    """Return numeric feature pairs with high absolute correlation.
+
+    :param data: Input DataFrame.
+    :param threshold: Keep pairs with absolute correlation greater than this value.
+    :param method: Correlation method accepted by ``DataFrame.corr``.
+    :return: DataFrame with columns ["Feature 1", "Feature 2", "Correlation"].
+    """
+    numeric_data = data.select_dtypes(include="number")
+    columns = ["Feature 1", "Feature 2", "Correlation"]
+
+    if numeric_data.shape[1] < 2:
+        return pd.DataFrame(columns=columns)
+
+    corr_matrix = numeric_data.corr(method="pearson").abs()
+    upper_triangle = corr_matrix.where(np.triu(np.ones(corr_matrix.shape, dtype=bool), k=1))
+
+    pairs = upper_triangle.stack().reset_index(name="Correlation")
+    pairs.columns = columns
+
+    result = pairs[pairs["Correlation"] > threshold]
+    return result.sort_values("Correlation", ascending=False).reset_index(drop=True)
+
+
+def remove_highly_correlated(data: pd.DataFrame, threshold: float = 0.95):
+  """ Remove one of each pair of highly correlated numeric features.
+    :param data: The input DataFrame.
+    :param threshold: The correlation threshold above which to remove one of the features.
+    :return: The DataFrame with highly correlated features removed and the list of dropped features.
+  """
+  numeric_data = data.select_dtypes(include="number")
+  corr_matrix = numeric_data.corr().abs()
+
+  upper = corr_matrix.where(
+    np.triu(np.ones(corr_matrix.shape), k=1).astype(bool)
+  )
+
+  to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
+
+  return data.drop(columns=to_drop), to_drop

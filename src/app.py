@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from data_read import read_data
-from data_analyst import std_data , missing_hidden_values , drop_missing_values  , impute_dataframe
+from data_analyst import std_data , missing_hidden_values , drop_missing_values  , impute_dataframe , detect_correlation , remove_highly_correlated
 from clean_dtype import std_data_types , detect_mixed_types
 from data_outlier import detect_outliers
 import missingno as msno
@@ -25,12 +25,17 @@ if uploaded:
     st.subheader("Preview")
     st.dataframe(df.head(20), use_container_width=True)
 
+
+    # Data Types ----------------------------------------------------
     st.subheader("Data Types")
     col1 , col2 = st.columns(2)
     with col1:
         st.subheader("Mixed data:")
         mixed_types = detect_mixed_types(df)
-        st.info(mixed_types if mixed_types else "No mixed data types detected. and all columns have consistent data types.")
+        if mixed_types:
+            st.write(mixed_types) 
+        else:
+            st.info("No mixed data types detected. and all columns have consistent data types.")
     with col2:
         st.subheader("Cleaned Data Types")
         df , percent_lost = std_data_types(df)
@@ -39,6 +44,7 @@ if uploaded:
             st.warning(f"Warning: {percent_lost:.2f}% of the data was lost during type conversion.")
 
 
+    # Missing Values ----------------------------------------------------
     st.subheader("Missing Values")
     col1 , col2 = st.columns([2 , 3])
 
@@ -69,6 +75,7 @@ if uploaded:
         st.info("No columns or rows were dropped. All columns and rows have less than 90% missing values.")
 
     
+    # Imputation ----------------------------------------------------
     st.subheader("fill missing values with KNN imputation and mode imputation")
     imputed , knn_cols = impute_dataframe(df)
     
@@ -166,8 +173,16 @@ if uploaded:
         st.dataframe(cat_summary[cat_summary > 0])  # Show only columns with rare categories
 
 
-
-
-
-
-
+    # Correlation Analysis ----------------------------------------------------
+    st.subheader("Correlation Analysis")
+    corr_result = detect_correlation(imputed)
+    if corr_result.empty:
+        st.info("No highly correlated numeric feature pairs found.")
+    else:
+        st.dataframe(corr_result, use_container_width=True)
+        if corr_result["Correlation"].max() > 0.95:
+            remove_corr = st.checkbox("Remove highly correlated features (threshold > 0.95)")
+            if remove_corr:
+                cleaned_data = remove_highly_correlated(imputed)
+                st.write("Highly correlated features removed. Cleaned data preview:")
+                st.dataframe(cleaned_data.head(), use_container_width=True)
